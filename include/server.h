@@ -10,10 +10,10 @@
 #define MAX_CONNECTIONS 10
 #define MAX_BUFFER 4095
 
-class Sever {
+class Server {
 public:
-    Sever();
-    ~Sever();
+    Server();
+    ~Server();
 
     // int getDataBuffer();
     // int getMaxConnections();
@@ -21,7 +21,7 @@ public:
     int creatSocket();
     int getPassivePort();
 
-    void run(int severFd);
+    void run(int serverFd);
 
     void processRecv();
 

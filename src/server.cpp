@@ -1,23 +1,23 @@
 #include "server.h"
 
-Sever::Sever() {
+Server::Server() {
 }
 
-Sever::~Sever() {
+Server::~Server() {
 }
 
-int Sever::getPassivePort() {
+int Server::getPassivePort() {
     return m_passivePort;
 }
 
-int Sever::creatSocket() {
+int Server::creatSocket() {
     struct sockaddr_in saddr;
     int                fd, ret_val;
 
     // 创建套接字
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (fd == -1) {
-        std::cout << "sever creation failed" << std::endl;
+        std::cout << "server creation failed" << std::endl;
         return -1;
     }
     std::cout << "server fd is : " << fd << std::endl;
@@ -41,13 +41,13 @@ int Sever::creatSocket() {
     return fd;
 }
 
-void Sever::run(int severFd) {
+void Server::run(int serverFd) {
     // 初始化文件描述符数组
     int connections[MAX_CONNECTIONS];
     for (int i = 1; i < MAX_CONNECTIONS; i++) {
         connections[i] = -1;
     }
-    connections[0] = severFd;
+    connections[0] = serverFd;
 
     struct sockaddr_in newAddr;
     socklen_t          newLen = sizeof(struct sockaddr);
@@ -67,10 +67,10 @@ void Sever::run(int severFd) {
         if (num >= 0) {
             std::cout << num << " events  occur" << std::endl;
             // 如果是服务器fd则代表有新的连接请求
-            if (FD_ISSET(severFd, &m_readSet)) {
+            if (FD_ISSET(serverFd, &m_readSet)) {
                 std::cout << "a new connection occurs" << std::endl;
 
-                int newFd = accept(severFd, (struct sockaddr*)&newAddr, &newLen);
+                int newFd = accept(serverFd, (struct sockaddr*)&newAddr, &newLen);
                 if (newFd >= 0) {
                     std::cout << "accept a new connection with fd " << newFd << std::endl;
 
@@ -122,5 +122,5 @@ void Sever::run(int severFd) {
     }
 }
 
-void Sever::processRecv() {
+void Server::processRecv() {
 }

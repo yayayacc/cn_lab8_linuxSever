@@ -2,18 +2,18 @@
 #include "test/test_ds.h"
 
 int main() {
-    Sever host;
+    Server host;
 
     // 创建监听套接字，绑定，监听
-    int severFd;
-    severFd = host.creatSocket();
-    if (severFd == -1) {
-        std::cout << "sever creation fail" << std::endl;
+    int serverFd;
+    serverFd = host.creatSocket();
+    if (serverFd == -1) {
+        std::cout << "server creation fail" << std::endl;
         return -1;
     }
 
     // 开始进入工作
-    host.run(severFd);
+    host.run(serverFd);
 
     test_ringQueue();
     test_bitArray();
