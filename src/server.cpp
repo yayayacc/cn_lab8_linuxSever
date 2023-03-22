@@ -1,10 +1,18 @@
 #include "server.h"
 
-Server::Server() {
+// User类成员函数
+User::User(char const* ac, char const* pw){
+    strcpy(account, ac);
+    strcpy(pwd, pw);
 }
 
-Server::~Server() {
+void User::bindFd(int f){
+    fd = f;
 }
+
+
+// Server类成员函数
+
 
 int Server::getPassivePort() {
     return m_passivePort;
@@ -123,4 +131,34 @@ void Server::run(int serverFd) {
 }
 
 void Server::processRecv() {
+}
+
+void Server::init(){
+    
+    // 用户1
+    char const* u1Account = "cc";
+    char const* u1Pwd = "123456";
+    User* u1 = new User(u1Account, u1Pwd);
+    allUser.push_back(u1);
+
+    // 用户2
+    char const* u2Account = "core";
+    char const* u2Pwd = "654321";
+    User* u2 = new User(u2Account, u2Pwd);
+    allUser.push_back(u2);
+
+    // 用户3
+    char const* u3Account = "godlike";
+    char const* u3Pwd = "likegod";
+    User* u3 = new User(u3Account, u3Pwd);
+    allUser.push_back(u3);
+
+
+    // 群1
+    Group* g1 = new Group();
+    g1->members.push_back(u1);
+    g1->members.push_back(u2);
+    g1->members.push_back(u3);
+
+    return;
 }
