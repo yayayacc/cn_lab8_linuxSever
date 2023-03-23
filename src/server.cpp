@@ -4,8 +4,11 @@
 
 // User类成员函数
 User::User(char const* ac, char const* pw){
-    strcpy(account, ac);
-    strcpy(pwd, pw);
+    account.resize(10);
+    pwd.resize(10);
+    
+    strcpy(const_cast<char*>(account.c_str()), ac);
+    strcpy(const_cast<char*>(pwd.c_str()), pw);
 }
 
 void User::bindFd(int f){
@@ -153,16 +156,53 @@ void Server::processRecv(int fd, int i) {
     int sum = read(fd, buffer, MAX_BUFFER);
     std::cout<<"读到了 "<<sum<<"字节"<<std::endl;
 
-    uint16_t ret = parser.parsePkgHead(buffer);
-    
+    parser.parsePkgHead(buffer);
+    parser.parseMsg(buffer);
+    process(fd, i, parser);
 
         // PackageFactory::getInstance().releaseLoginPackage(buffer);
 }
 
+
+void Server::process(int fd, int i, Parser parser){
+    if(int(parser.info.opcode) == 10)   {
+        std::cout<<"parser  pkg10"<<std::endl;
+        process10(fd, parser);
+    }
+}
+
+void Server::process10(int fd, Parser parser){
+    
+    for(int i = 0; i < allUser.size(); i++){
+
+    std::cout<<allUser[i]->account<< " 是账号名!"<<std::endl;
+    std::cout<<allUser[i]->pwd<< " 是密码!"<<std::endl;
+
+    std::cout<<parser.info.account<<std::endl;
+
+        if(allUser[i]->account == parser.info.account){
+            std::cout<<parser.msg<<std::endl;
+            if(allUser[i]->pwd == parser.msg){
+                allUser[i]->online = true;
+                // TODO: 给客户端返回登录成功报文
+                std::cout<<allUser[i]->account<< " has logged in successfully!"<<std::endl;
+            }
+            else{
+                // TODO: 给客户端返回登录失败报文
+                std::cout<<allUser[i]->account<< " logging in failed!"<<std::endl;
+            }
+            break;
+        }
+    }
+    std::cout<<"get out of process10"<<std::endl;
+}
+
+
+
 void Server::init(){
     
     // 用户1
-    char const* u1Account = "cc";
+    char const* u1Account = "cc12345678";
     char const* u1Pwd = "123456";
     User* u1 = new User(u1Account, u1Pwd);
     allUser.push_back(u1);

@@ -24,7 +24,7 @@ struct Parser {
     // parsePkgHead first, then parseContent
     
 public:
-    uint16_t parsePkgHead(char* start) {
+    void parsePkgHead(char* start) {
         info.account.resize(10);
         info.target.resize(10);
         info.filename.resize(13);
@@ -47,22 +47,16 @@ public:
             memcpy(const_cast<char*>(info.filename.c_str()), cur + 27, 13);
         }
 
-        return info.msglen;
     }
 
-    // void parseContent(char* start) {
+    void parseMsg(char* start) {
         
-    //     info.password.resize(msglen);
+        msg.resize(info.msglen);
         
-    //     memcpy(const_cast<char*>(info.password.c_str()), start, msglen);
-    // }
-
-    
-
-
-
-
+        memcpy(const_cast<char*>(msg.c_str()), start+40, info.msglen);
+    }
 
     Info info;
+    std::string msg; // 报尾携带的信息
     // uint16_t  msglen; //必须为uint16_t
 };
