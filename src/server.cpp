@@ -154,7 +154,7 @@ void Server::processRecv(int fd, int i) {
     // }
     // std::cout<<"读成功了"<<std::endl;
     int sum = read(fd, buffer, MAX_BUFFER);
-    std::cout<<"读到了 "<<sum<<"字节"<<std::endl;
+    std::cout<<"we have read "<<sum<<"byte(s)"<<std::endl;
 
     parser.parsePkgHead(buffer);
     parser.parseMsg(buffer);
@@ -166,8 +166,12 @@ void Server::processRecv(int fd, int i) {
 
 void Server::process(int fd, int i, Parser parser){
     if(int(parser.info.opcode) == 10)   {
-        std::cout<<"parser  pkg10"<<std::endl;
+        std::cout<<"parse  pkg10"<<std::endl;
         process10(fd, parser);
+    }
+    if(int(parser.info.opcode) == 2){
+        std::cout<<"parse  pkg2"<<std::endl;
+        process2(fd, parser);
     }
 }
 
@@ -176,7 +180,6 @@ void Server::process10(int fd, Parser parser){
     auto iter = allUsers.find(parser.info.account);
     if(iter == allUsers.end()){
         // 查无此人
-        // TODO: 返回一个报文说明没有此用户
         auto pkg = 
                 PackageFactory::getInstance().createPackage1("0000000000", 'c'); // 十个0表示用户不存在
         sleep(0.5);
@@ -190,18 +193,18 @@ void Server::process10(int fd, Parser parser){
 
         if(strcmp(iter->second.pwd.c_str(), parser.msg.c_str()) == 0){
             // 登录成功
-            // TODO: 给客户端返回登录成功报文
+            // TODO: 还需要写加载缓存区消息
             std::cout<<iter->first<<" has logged in successfully!"<<std::endl;
             iter->second.online = true;
             auto pkg = 
                     PackageFactory::getInstance().createPackage1(iter->first.c_str(), 'a');
             sleep(0.5);
+            account2fd.insert(std::pair<std::string, int>(iter->first, fd));
             write(fd, pkg.start, pkg.size);
             // std::cout<<"登录反馈报文发送成功"<<"   "<<pkg.size<<std::endl;
         }
 
         else{
-            // TODO: 给客户端返回登录失败报文
             auto pkg = 
                     PackageFactory::getInstance().createPackage1(iter->first.c_str(), 'b');
             sleep(0.5);
@@ -264,4 +267,23 @@ void Server::init(){
     // g1->members.push_back(u3);
 
     return;
+}
+
+void Server::process2(int fd, Parser parser){
+    std::string account = parser.info.account;
+    std::string target = parser.info.target;
+    
+    auto iter = account2fd.find(target);
+    if(iter == account2fd.end()){
+        // 目标账户名不存在，   UI界面不应有这种情况出现
+        return;
+    }
+    else{
+        auto pkg = 
+                PackageFactory::getInstance().createPackage2(parser.info.account, parser.info.target, parser.msg);
+        sleep(0.5);
+        int targetFd = iter->second;
+        write(targetFd, pkg.start, pkg.size);
+        std::cout<<"发送成功"<<std::endl;
+    }
 }

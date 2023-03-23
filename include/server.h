@@ -29,8 +29,8 @@ class User{
         std::vector<User*> friends; // 好友列表
         // std::vector<Group*> groups; // 群列表
 
-        std::map<std::string, User> mfriend;
-        std::map<std::string, Group> mgroups;
+        // std::map<std::string, User> mfriend;
+        // std::map<std::string, Group> mgroups;
         // TODO:应该还要有个消息缓冲区，用以存放离线时的消息
         int fd; // 这个账号登录时使用的是哪个文件描述符
 };
@@ -62,6 +62,7 @@ public:
     void processRecv(int fd, int i);// i是套接字在connections里的下标
     void process(int fd, int i, Parser parser);
     void process10(int fd, Parser parser); // 用于处理登录
+    void process2(int fd, Parser parser); // 用于处理消息单发
 
 private:
     char buffer[MAX_BUFFER];
@@ -73,6 +74,7 @@ private:
     
 
     std::map<std::string, User> allUsers;
+    std::map<std::string, int> account2fd;
     // std::vector<User*> allUser; // 系统中所有的用户
     // std::vector<Group*> allGroup; // 系统中所有的群聊
 };

@@ -1,5 +1,12 @@
 #include"package_factory.h"
 
+
+void PackageFactory::releasePackage(Package pkg){
+
+} 
+
+
+
 Package PackageFactory:: createLoginPackage(const char* account /* 10 byte */, const std::string& password) {
     Package pkg;
     pkg.size  = 40 + password.size(); // 40 Byte is the size of PackageHead
@@ -58,6 +65,35 @@ Package PackageFactory::createPackage1(const char* account, char flag){
     return pkg;
 }
 
-void PackageFactory::releasePackage(Package pkg){
 
-} 
+
+Package PackageFactory::createPackage2(std::string account, std::string target, std::string msg){
+    Package pkg;
+    pkg.size  = 40 + msg.size(); // 40 Byte is the size of PackageHead
+    pkg.start = new Byte[pkg.size];
+    
+    memset(pkg.start, 0, pkg.size);
+    
+    {
+
+        // 1.type
+        uint8_t type = 2;
+        memcpy(pkg.start, &type, 1);
+
+        // 2.account
+        memcpy(pkg.start + 1, account.c_str(), 10);
+
+        // 3.target
+        memcpy(pkg.start + 11, target.c_str(), 10);
+
+        // 4.msg_len
+        size_t msglen = msg.size();
+        memcpy(pkg.start + 25, &msg, 2);
+
+        // 5.msg
+        memcpy(pkg.start + 40, msg.c_str(), msg.size());
+    }
+    return pkg;
+}
+
+

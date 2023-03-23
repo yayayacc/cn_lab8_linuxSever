@@ -22,7 +22,7 @@ public:
 
     static Package createLoginPackage(const char* account /* 10 byte */, const std::string& password);
     static Package createPackage1(const char* account, char flag);
-
+    static Package createPackage2(std::string account, std::string target, std::string msg );
 
 
     static void releasePackage(Package pkg);
