@@ -69,7 +69,7 @@ Package PackageFactory::createPackage1(const char* account, char flag){
 
 Package PackageFactory::createPackage2(std::string account, std::string target, std::string msg){
     Package pkg;
-    pkg.size  = 40 + msg.size(); // 40 Byte is the size of PackageHead
+    pkg.size  = 40 + msg.size()+1; // 40 Byte is the size of PackageHead
     pkg.start = new Byte[pkg.size];
     
     memset(pkg.start, 0, pkg.size);
@@ -88,11 +88,12 @@ Package PackageFactory::createPackage2(std::string account, std::string target, 
 
         // 4.msg_len
         size_t msglen = msg.size();
-        memcpy(pkg.start + 25, &msg, 2);
+        memcpy(pkg.start + 25, &msglen, 2);
 
         // 5.msg
         memcpy(pkg.start + 40, msg.c_str(), msg.size());
     }
+    // memset(pkg.start+pkg.size, 0, 1);
     return pkg;
 }
 

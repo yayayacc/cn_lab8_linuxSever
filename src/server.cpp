@@ -279,11 +279,17 @@ void Server::process2(int fd, Parser parser){
         return;
     }
     else{
+        std::cout<<"account: "<<parser.info.account<<std::endl;
+        std::cout<<"target: "<<parser.info.target<<std::endl;
+        std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
+        std::cout<<"msg: "<<parser.msg<<std::endl;
         auto pkg = 
                 PackageFactory::getInstance().createPackage2(parser.info.account, parser.info.target, parser.msg);
         sleep(0.5);
         int targetFd = iter->second;
         write(targetFd, pkg.start, pkg.size);
         std::cout<<"发送成功"<<std::endl;
+                exit(0);
+
     }
 }
