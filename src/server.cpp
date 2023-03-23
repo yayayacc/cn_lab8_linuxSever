@@ -177,17 +177,35 @@ void Server::process10(int fd, Parser parser){
     if(iter == allUsers.end()){
         // 查无此人
         // TODO: 返回一个报文说明没有此用户
+        auto pkg = 
+                PackageFactory::getInstance().createPackage1("0000000000", 'c'); // 十个0表示用户不存在
+        sleep(0.5);
+        write(fd, pkg.start, pkg.size);
+        std::cout<<"this account does not exist!"<<"   "<<pkg.size<<std::endl;
+        return;
     }
+
     else{
         parser.msg.resize(parser.info.msglen);
+
         if(strcmp(iter->second.pwd.c_str(), parser.msg.c_str()) == 0){
             // 登录成功
             // TODO: 给客户端返回登录成功报文
             std::cout<<iter->first<<" has logged in successfully!"<<std::endl;
             iter->second.online = true;
+            auto pkg = 
+                    PackageFactory::getInstance().createPackage1(iter->first.c_str(), 'a');
+            sleep(0.5);
+            write(fd, pkg.start, pkg.size);
+            // std::cout<<"登录反馈报文发送成功"<<"   "<<pkg.size<<std::endl;
         }
+
         else{
             // TODO: 给客户端返回登录失败报文
+            auto pkg = 
+                    PackageFactory::getInstance().createPackage1(iter->first.c_str(), 'b');
+            sleep(0.5);
+            write(fd, pkg.start, pkg.size);
             std::cout<<iter->first<<" failed in logging in!"<<std::endl;
         }
     }
