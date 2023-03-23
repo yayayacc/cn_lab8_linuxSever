@@ -29,8 +29,8 @@ class User{
         std::vector<User*> friends; // 好友列表
         // std::vector<Group*> groups; // 群列表
 
-        std::map<std::string, std::string> mfriend;
-        std::map<std::string, std::string> mgroups;
+        std::map<std::string, User> mfriend;
+        std::map<std::string, Group> mgroups;
         // TODO:应该还要有个消息缓冲区，用以存放离线时的消息
         int fd; // 这个账号登录时使用的是哪个文件描述符
 };
@@ -40,8 +40,8 @@ class Group{
         Group() = default;
         ~Group() = default;
 
-        char account[10]; // 群的账号
-        std::vector<User*> members; // 群成员
+        std::string account; // 群的账号
+        std::vector<std::string> members; // 群成员
 };
 
 
@@ -71,6 +71,8 @@ private:
     fd_set tem_set;
     int m_passivePort = 6666;
     
-    std::vector<User*> allUser; // 系统中所有的用户
+
+    std::map<std::string, User> allUsers;
+    // std::vector<User*> allUser; // 系统中所有的用户
     // std::vector<Group*> allGroup; // 系统中所有的群聊
 };

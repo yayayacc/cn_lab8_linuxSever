@@ -173,27 +173,46 @@ void Server::process(int fd, int i, Parser parser){
 
 void Server::process10(int fd, Parser parser){
     
-    for(int i = 0; i < allUser.size(); i++){
-
-    std::cout<<allUser[i]->account<< " 是账号名!"<<std::endl;
-    std::cout<<allUser[i]->pwd<< " 是密码!"<<std::endl;
-
-    std::cout<<parser.info.account<<std::endl;
-
-        if(allUser[i]->account == parser.info.account){
-            std::cout<<parser.msg<<std::endl;
-            if(allUser[i]->pwd == parser.msg){
-                allUser[i]->online = true;
-                // TODO: 给客户端返回登录成功报文
-                std::cout<<allUser[i]->account<< " has logged in successfully!"<<std::endl;
-            }
-            else{
-                // TODO: 给客户端返回登录失败报文
-                std::cout<<allUser[i]->account<< " logging in failed!"<<std::endl;
-            }
-            break;
+    auto iter = allUsers.find(parser.info.account);
+    if(iter == allUsers.end()){
+        // 查无此人
+        // TODO: 返回一个报文说明没有此用户
+    }
+    else{
+        parser.msg.resize(parser.info.msglen);
+        if(strcmp(iter->second.pwd.c_str(), parser.msg.c_str()) == 0){
+            // 登录成功
+            // TODO: 给客户端返回登录成功报文
+            std::cout<<iter->first<<" has logged in successfully!"<<std::endl;
+            iter->second.online = true;
+        }
+        else{
+            // TODO: 给客户端返回登录失败报文
+            std::cout<<iter->first<<" failed in logging in!"<<std::endl;
         }
     }
+
+    // for(int i = 0; i < allUser.size(); i++){
+
+    // std::cout<<allUser[i]->account<< " 是账号名!"<<std::endl;
+    // std::cout<<allUser[i]->pwd<< " 是密码!"<<std::endl;
+
+    // std::cout<<parser.info.account<<std::endl;
+
+    //     if(allUser[i]->account == parser.info.account){
+    //         std::cout<<parser.msg<<std::endl;
+    //         if(allUser[i]->pwd == parser.msg){
+    //             allUser[i]->online = true;
+    //             // TODO: 给客户端返回登录成功报文
+    //             std::cout<<allUser[i]->account<< " has logged in successfully!"<<std::endl;
+    //         }
+    //         else{
+    //             // TODO: 给客户端返回登录失败报文
+    //             std::cout<<allUser[i]->account<< " logging in failed!"<<std::endl;
+    //         }
+    //         break;
+    //     }
+    // }
     std::cout<<"get out of process10"<<std::endl;
 }
 
@@ -204,27 +223,27 @@ void Server::init(){
     // 用户1
     char const* u1Account = "cc12345678";
     char const* u1Pwd = "123456";
-    User* u1 = new User(u1Account, u1Pwd);
-    allUser.push_back(u1);
+    User u1(u1Account, u1Pwd);
+    allUsers.insert(std::pair<std::string, User>(u1Account, u1));
 
     // 用户2
-    char const* u2Account = "core";
+    char const* u2Account = "core123456";
     char const* u2Pwd = "654321";
-    User* u2 = new User(u2Account, u2Pwd);
-    allUser.push_back(u2);
+    User u2(u2Account, u2Pwd);
+    allUsers.insert(std::pair<std::string, User>(u2Account, u2));
 
     // 用户3
-    char const* u3Account = "godlike";
+    char const* u3Account = "godlike123";
     char const* u3Pwd = "likegod";
-    User* u3 = new User(u3Account, u3Pwd);
-    allUser.push_back(u3);
+    User u3(u3Account, u3Pwd);
+    allUsers.insert(std::pair<std::string, User>(u3Account, u3));
 
 
     // 群1
-    Group* g1 = new Group();
-    g1->members.push_back(u1);
-    g1->members.push_back(u2);
-    g1->members.push_back(u3);
+    // Group* g1 = new Group();
+    // g1->members.push_back(u1);
+    // g1->members.push_back(u2);
+    // g1->members.push_back(u3);
 
     return;
 }
