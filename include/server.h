@@ -54,13 +54,14 @@ public:
 
     void run(int serverFd);
 
-    void processRecv();
+    void processRecv(int fd, int i);// i是套接字在connections里的下标
 
 private:
-    int buffer[MAX_BUFFER];
+    char buffer[MAX_BUFFER];
+    int connections[MAX_CONNECTIONS];// 已经连接上的fd
     // int m_maxConnections = 10;
     fd_set m_readSet;
-
+    fd_set tem_set;
     int m_passivePort = 6666;
     
     std::vector<User*> allUser; // 系统中所有的用户

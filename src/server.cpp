@@ -1,4 +1,6 @@
 #include "server.h"
+#include "parser.h"
+#include "package_factory.h"
 
 // User类成员函数
 User::User(char const* ac, char const* pw){
@@ -51,7 +53,7 @@ int Server::creatSocket() {
 
 void Server::run(int serverFd) {
     // 初始化文件描述符数组
-    int connections[MAX_CONNECTIONS];
+    
     for (int i = 1; i < MAX_CONNECTIONS; i++) {
         connections[i] = -1;
     }
@@ -60,8 +62,11 @@ void Server::run(int serverFd) {
     struct sockaddr_in newAddr;
     socklen_t          newLen = sizeof(struct sockaddr);
     // 循环工作
+    std::cout<<"开始循环工作"<<std::endl;
     while (true) {
         // 清理并且对readSet重新赋值
+        memset(buffer, 0, MAX_BUFFER);
+        
         FD_ZERO(&m_readSet);
         for (int i = 0; i < MAX_CONNECTIONS; i++) {
             if (connections[i] >= 0) {
@@ -69,11 +74,14 @@ void Server::run(int serverFd) {
             }
         }
 
+
         // 开始用select进行监听,num为每次监听到的个数
-        int num = select(MAX_CONNECTIONS, &m_readSet, NULL, NULL, NULL);
+        int num = select(MAX_CONNECTIONS+1, &m_readSet, NULL, NULL, NULL);
+
+        
         // select函数里面后面三个为NULL，代表对输入、异常不感兴趣，以及时间为无限等待
         if (num >= 0) {
-            std::cout << num << " events  occur" << std::endl;
+            std::cout << num << " event(s)  occur" << std::endl;
             // 如果是服务器fd则代表有新的连接请求
             if (FD_ISSET(serverFd, &m_readSet)) {
                 std::cout << "a new connection occurs" << std::endl;
@@ -104,13 +112,14 @@ void Server::run(int serverFd) {
             for (int i = 1; i < MAX_CONNECTIONS; i++) {
                 if (FD_ISSET(connections[i], &m_readSet) && (connections[i] > 0)) {
                     // int res = recv(connections[i], buffer, MAX_BUFFER, 0);
-                    // processRecv();
-                    std::cout<<"fd :"<<connections[i]<<"has sth occurs"<<std::endl;
-                    if(read(connections[i], buffer, MAX_BUFFER) == 0){
-                        close(connections[i]);
-                        std::cout<<"delete fd:"<<connections[i]<<std::endl;
-                        connections[i] = -1;
-                    }
+                    std::cout<<"fd :"<<connections[i]<<" has sth occurs"<<std::endl;
+                    processRecv(connections[i], i);
+                    
+                    // if(read(connections[i], buffer, MAX_BUFFER) == 0){
+                    //     close(connections[i]);
+                    //     std::cout<<"delete fd:"<<connections[i]<<std::endl;
+                    //     connections[i] = -1;
+                    // }
                 }
             }
             num--;
@@ -130,7 +139,24 @@ void Server::run(int serverFd) {
     }
 }
 
-void Server::processRecv() {
+void Server::processRecv(int fd, int i) {
+    Parser parser;
+
+    int readSize;
+    // if((readSize = read(fd, buffer, MAX_BUFFER) == 0)){
+    //     close(fd);
+    //     connections[i] = -1;
+    //     std::cout<<"delete fd: "<<fd<<std::endl;
+    //     return;
+    // }
+    // std::cout<<"读成功了"<<std::endl;
+    int sum = read(fd, buffer, MAX_BUFFER);
+    std::cout<<"读到了 "<<sum<<"字节"<<std::endl;
+
+    uint16_t ret = parser.parsePkgHead(buffer);
+    
+
+        // PackageFactory::getInstance().releaseLoginPackage(buffer);
 }
 
 void Server::init(){
