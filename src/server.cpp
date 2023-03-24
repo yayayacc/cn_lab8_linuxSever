@@ -16,8 +16,65 @@ void User::bindFd(int f){
 }
 
 
-// Server类成员函数
+// Group类成员函数
+Group::Group(char const* groupName){
+    account.reserve(10);
+    strcpy(const_cast<char*>(account.c_str()), groupName);
+}
 
+
+
+
+// Server类成员函数
+void Server::init(){
+    
+    // 用户1
+    char const* u1Account = "cc12345678";
+    char const* u1Pwd = "123456";
+    User u1(u1Account, u1Pwd);
+    // 用户2
+    char const* u2Account = "core123456";
+    char const* u2Pwd = "654321";
+    User u2(u2Account, u2Pwd);
+    // 用户3
+    char const* u3Account = "godlike123";
+    char const* u3Pwd = "likegod";
+    User u3(u3Account, u3Pwd);
+
+
+
+    // 三个人共同的群
+    char const* groupName = "groupChat1";
+    Group g1(groupName);
+    // 把三个人放到群中
+    g1.members.insert(std::pair<std::string, User>(u1Account, u1));
+    g1.members.insert(std::pair<std::string, User>(u2Account, u2));
+    g1.members.insert(std::pair<std::string, User>(u3Account, u3));
+
+
+
+    // 三个用户各自的朋友
+    u1.friends.insert(std::pair<std::string, User>(u2Account, u2));
+    u1.friends.insert(std::pair<std::string, User>(u3Account, u3));
+
+    u2.friends.insert(std::pair<std::string, User>(u1Account, u1));
+    u2.friends.insert(std::pair<std::string, User>(u3Account, u3));
+
+    u3.friends.insert(std::pair<std::string, User>(u1Account, u1));
+    u3.friends.insert(std::pair<std::string, User>(u2Account, u2));
+
+
+
+    // 把三个人放到系统中
+    allUsers.insert(std::pair<std::string, User>(u1Account, u1));
+    allUsers.insert(std::pair<std::string, User>(u2Account, u2));
+    allUsers.insert(std::pair<std::string, User>(u3Account, u3));
+
+    //把群放到系统中
+    allGroups.insert(std::pair<std::string, Group>(groupName, g1));
+
+    return;
+}
 
 int Server::getPassivePort() {
     return m_passivePort;
@@ -173,7 +230,13 @@ void Server::process(int fd, int i, Parser parser){
         std::cout<<"parse  pkg2"<<std::endl;
         process2(fd, parser);
     }
+    if(int(parser.info.opcode) == 3){
+        std::cout<<"parse  pkg2"<<std::endl;
+        process3(fd, parser);
+
+    }
 }
+
 
 void Server::process10(int fd, Parser parser){
     
@@ -213,61 +276,10 @@ void Server::process10(int fd, Parser parser){
         }
     }
 
-    // for(int i = 0; i < allUser.size(); i++){
-
-    // std::cout<<allUser[i]->account<< " 是账号名!"<<std::endl;
-    // std::cout<<allUser[i]->pwd<< " 是密码!"<<std::endl;
-
-    // std::cout<<parser.info.account<<std::endl;
-
-    //     if(allUser[i]->account == parser.info.account){
-    //         std::cout<<parser.msg<<std::endl;
-    //         if(allUser[i]->pwd == parser.msg){
-    //             allUser[i]->online = true;
-    //             // TODO: 给客户端返回登录成功报文
-    //             std::cout<<allUser[i]->account<< " has logged in successfully!"<<std::endl;
-    //         }
-    //         else{
-    //             // TODO: 给客户端返回登录失败报文
-    //             std::cout<<allUser[i]->account<< " logging in failed!"<<std::endl;
-    //         }
-    //         break;
-    //     }
-    // }
+    
     std::cout<<"get out of process10"<<std::endl;
 }
 
-
-
-void Server::init(){
-    
-    // 用户1
-    char const* u1Account = "cc12345678";
-    char const* u1Pwd = "123456";
-    User u1(u1Account, u1Pwd);
-    allUsers.insert(std::pair<std::string, User>(u1Account, u1));
-
-    // 用户2
-    char const* u2Account = "core123456";
-    char const* u2Pwd = "654321";
-    User u2(u2Account, u2Pwd);
-    allUsers.insert(std::pair<std::string, User>(u2Account, u2));
-
-    // 用户3
-    char const* u3Account = "godlike123";
-    char const* u3Pwd = "likegod";
-    User u3(u3Account, u3Pwd);
-    allUsers.insert(std::pair<std::string, User>(u3Account, u3));
-
-
-    // 群1
-    // Group* g1 = new Group();
-    // g1->members.push_back(u1);
-    // g1->members.push_back(u2);
-    // g1->members.push_back(u3);
-
-    return;
-}
 
 void Server::process2(int fd, Parser parser){
     std::string account = parser.info.account;
@@ -279,17 +291,57 @@ void Server::process2(int fd, Parser parser){
         return;
     }
     else{
-        std::cout<<"account: "<<parser.info.account<<std::endl;
-        std::cout<<"target: "<<parser.info.target<<std::endl;
-        std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
-        std::cout<<"msg: "<<parser.msg<<std::endl;
+        // std::cout<<"account: "<<parser.info.account<<std::endl;
+        // std::cout<<"target: "<<parser.info.target<<std::endl;
+        // std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
+        // std::cout<<"msg: "<<parser.msg<<std::endl;
         auto pkg = 
                 PackageFactory::getInstance().createPackage2(parser.info.account, parser.info.target, parser.msg);
         sleep(0.5);
         int targetFd = iter->second;
         write(targetFd, pkg.start, pkg.size);
-        std::cout<<"发送成功"<<std::endl;
-                exit(0);
+        std::cout<<"私信发送成功"<<std::endl;
+        //exit(0);
 
     }
 }
+
+void Server::process3(int fd, Parser parser){
+    std::string account = parser.info.account;
+    std::string groupTarget = parser.info.target;
+    
+    auto groupIter = allGroups.find(groupTarget);
+
+    if(groupIter == allGroups.end()){
+        // 目标组不存在，   UI界面不应该有这种情况
+        return;
+    }
+    else{
+        auto temGroup = groupIter->second;
+        auto pkg = 
+                PackageFactory::getInstance().createPackage3(parser.info.account, parser.info.target, parser.msg);
+        sleep(0.5);
+        for(auto &user : temGroup.members){
+            auto iter = account2fd.find(user.first);
+            if(iter == account2fd.end()){
+                // 目标用户不在此组内，   UI界面不应该有这种情况
+            }
+            else{
+                int targetFd = iter->second;
+                write(targetFd, pkg.start, pkg.size);
+            }
+        }
+        std::cout<<"群消息发送成功"<<std::endl;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+

@@ -26,11 +26,9 @@ class User{
         bool online = false; // 登录状态
         std::string account;
         std::string pwd;
-        std::vector<User*> friends; // 好友列表
-        // std::vector<Group*> groups; // 群列表
+        std::map<std::string, User> friends; // 好友列表
+        std::map<std::string, Group> groups;
 
-        // std::map<std::string, User> mfriend;
-        // std::map<std::string, Group> mgroups;
         // TODO:应该还要有个消息缓冲区，用以存放离线时的消息
         int fd; // 这个账号登录时使用的是哪个文件描述符
 };
@@ -38,10 +36,13 @@ class User{
 class Group{
     public:
         Group() = default;
+        Group(char const* groupName);
         ~Group() = default;
 
+
+
         std::string account; // 群的账号
-        std::vector<std::string> members; // 群成员
+        std::map<std::string, User> members; // 群成员
 };
 
 
@@ -61,8 +62,9 @@ public:
 
     void processRecv(int fd, int i);// i是套接字在connections里的下标
     void process(int fd, int i, Parser parser);
-    void process10(int fd, Parser parser); // 用于处理登录
+    void process10(int fd, Parser parser); // 用于处理登录， 报文操作码为10
     void process2(int fd, Parser parser); // 用于处理消息单发
+    void process3(int fd, Parser parser);// 用于处理群发消息
 
 private:
     char buffer[MAX_BUFFER];
@@ -74,6 +76,8 @@ private:
     
 
     std::map<std::string, User> allUsers;
+    std::map<std::string, Group> allGroups;
+
     std::map<std::string, int> account2fd;
     // std::vector<User*> allUser; // 系统中所有的用户
     // std::vector<Group*> allGroup; // 系统中所有的群聊
