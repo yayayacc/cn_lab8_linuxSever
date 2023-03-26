@@ -65,6 +65,7 @@ public:
     void process10(int fd, Parser parser); // 用于处理登录， 报文操作码为10
     void process2(int fd, Parser parser); // 用于处理消息单发
     void process3(int fd, Parser parser);// 用于处理群发消息
+    void process4(int fd, Parser parser);// 用于处理文件发送
 
 private:
     char buffer[MAX_BUFFER];

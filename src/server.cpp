@@ -231,9 +231,12 @@ void Server::process(int fd, int i, Parser parser){
         process2(fd, parser);
     }
     if(int(parser.info.opcode) == 3){
-        std::cout<<"parse  pkg2"<<std::endl;
+        std::cout<<"parse  pkg3"<<std::endl;
         process3(fd, parser);
-
+    }
+    if(int(parser.info.opcode) == 4){
+        std::cout<<"parse  pkg4"<<std::endl;
+        process4(fd, parser);
     }
 }
 
@@ -336,6 +339,33 @@ void Server::process3(int fd, Parser parser){
 }
 
 
+void Server::process4(int fd, Parser parser){
+    std::string account = parser.info.account;
+    std::string target = parser.info.target;
+    uint32_t fileIndex = parser.info.msgindex;
+    
+    auto iter = account2fd.find(target);
+    if(iter == account2fd.end()){
+        // 目标账户名不存在，   UI界面不应有这种情况出现
+        return;
+    }
+    else{
+        // std::cout<<"account: "<<parser.info.account<<std::endl;
+        // std::cout<<"target: "<<parser.info.target<<std::endl;
+        // std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
+        // std::cout<<"msg: "<<parser.msg<<std::endl;
+        auto pkg = 
+                PackageFactory::getInstance().createPackage4(parser.info.account, parser.info.target,
+                    parser.info.msgindex, parser.info.filename, parser.msg);
+        sleep(0.5);
+        int targetFd = iter->second;
+        write(targetFd, pkg.start, pkg.size);
+        //exit(0);
+
+    }
+
+
+}
 
 
 
