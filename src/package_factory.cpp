@@ -156,10 +156,47 @@ Package PackageFactory::createPackage4(std::string account, std::string target, 
         memcpy(pkg.start + 25, &msglen, 2);
 
         // 6.filename
-        memcpy(pkg.start + 27, account.c_str(), 13);
+        memcpy(pkg.start + 27, filename.c_str(), 13);
         
         // 7.msg
         memcpy(pkg.start + 40, msg.c_str(), msg.size());
+    }
+    return pkg;
+}
+
+
+Package PackageFactory::createPackage6(std::string account, std::string target, std::string filename, int fileIndex){
+    Package pkg;
+    pkg.size  = 40 ; // 40 Byte is the size of PackageHead
+    pkg.start = new Byte[pkg.size];
+    
+    memset(pkg.start, 0, pkg.size);
+
+    {
+
+        // 1.type
+        uint8_t type = 6;
+        memcpy(pkg.start, &type, 1);
+
+        // 2.account
+        memcpy(pkg.start + 1, account.c_str(), 10);
+
+        // 3.groupTarget
+        memcpy(pkg.start + 11, target.c_str(), 10);
+
+        // 4.msg_index
+        size_t msg_idx = fileIndex;
+        memcpy(pkg.start + 21, &msg_idx, 4);
+
+        // // 5.msg_len
+        // size_t msglen = msg.size();
+        // memcpy(pkg.start + 25, &msglen, 2);
+
+        // 6.filename
+        memcpy(pkg.start + 27, filename.c_str(), 13);
+        
+        // // 7.msg
+        // memcpy(pkg.start + 40, msg.c_str(), msg.size());
     }
     return pkg;
 }

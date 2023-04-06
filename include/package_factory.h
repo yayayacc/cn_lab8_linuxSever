@@ -30,6 +30,7 @@ public:
     static Package createPackage3(std::string account, std::string groupTarget, std::string msg );
     // 创建发送文件所需要的报文
     static Package createPackage4(std::string account, std::string target, int mstIndex, std::string filename, std::string msg);
-
+    // 创建重传所需要的报文
+    static Package createPackage6(std::string account, std::string target, std::string filename, int fileIndex);
     static void releasePackage(Package pkg);
 };

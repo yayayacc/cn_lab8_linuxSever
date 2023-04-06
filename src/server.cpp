@@ -173,7 +173,7 @@ void Server::run(int serverFd) {
                 if (FD_ISSET(connections[i], &m_readSet) && (connections[i] > 0)) {
                     // int res = recv(connections[i], buffer, MAX_BUFFER, 0);
                     std::cout<<"fd :"<<connections[i]<<" has sth occurs"<<std::endl;
-                    processRecv(connections[i], i);
+                    processRecv(connections, i);
                     
                     // if(read(connections[i], buffer, MAX_BUFFER) == 0){
                     //     close(connections[i]);
@@ -199,7 +199,7 @@ void Server::run(int serverFd) {
     }
 }
 
-void Server::processRecv(int fd, int i) {
+void Server::processRecv(int* connections, int i) {
     Parser parser;
 
     int readSize;
@@ -210,12 +210,19 @@ void Server::processRecv(int fd, int i) {
     //     return;
     // }
     // std::cout<<"读成功了"<<std::endl;
-    int sum = read(fd, buffer, MAX_BUFFER);
+    int sum = read(connections[i], buffer, MAX_BUFFER);
     std::cout<<"we have read "<<sum<<"byte(s)"<<std::endl;
+    if( sum == 0){
+        close(connections[i]);
+        std::cout<<"fd : "<<connections[i]<<" has been disconnected!"<<std::endl;
+        connections[i] = -1;
+        
+    }
+    
 
     parser.parsePkgHead(buffer);
     parser.parseMsg(buffer);
-    process(fd, i, parser);
+    process(connections[i], i, parser);
 
         // PackageFactory::getInstance().releaseLoginPackage(buffer);
 }
@@ -237,6 +244,10 @@ void Server::process(int fd, int i, Parser parser){
     if(int(parser.info.opcode) == 4){
         std::cout<<"parse  pkg4"<<std::endl;
         process4(fd, parser);
+    }
+    if(int(parser.info.opcode) == 6){
+        std::cout<<"parse  pkg6"<<std::endl;
+        process6(fd, parser);
     }
 }
 
@@ -363,10 +374,35 @@ void Server::process4(int fd, Parser parser){
         //exit(0);
 
     }
-
-
 }
 
+
+
+void Server::process6(int fd, Parser parser){
+    std::string account = parser.info.account;
+    std::string target = parser.info.target;
+    uint32_t fileIndex = parser.info.msgindex;
+
+    auto iter = account2fd.find(target);
+    if(iter == account2fd.end()){
+        // 目标账户名不存在，   UI界面不应有这种情况出现
+        return;
+    }
+    else{
+        // std::cout<<"account: "<<parser.info.account<<std::endl;
+        // std::cout<<"target: "<<parser.info.target<<std::endl;
+        // std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
+        // std::cout<<"msg: "<<parser.msg<<std::endl;
+        auto pkg = 
+                PackageFactory::getInstance().createPackage6(parser.info.account, parser.info.target,
+                    parser.info.filename, parser.info.msgindex);
+        sleep(0.5);
+        int targetFd = iter->second;
+        write(targetFd, pkg.start, pkg.size);
+        //exit(0);
+
+    }
+}
 
 
 

@@ -60,12 +60,13 @@ public:
 
     void run(int serverFd);
 
-    void processRecv(int fd, int i);// i是套接字在connections里的下标
+    void processRecv(int* connections, int i);// i是套接字在connections里的下标
     void process(int fd, int i, Parser parser);
     void process10(int fd, Parser parser); // 用于处理登录， 报文操作码为10
     void process2(int fd, Parser parser); // 用于处理消息单发
     void process3(int fd, Parser parser);// 用于处理群发消息
     void process4(int fd, Parser parser);// 用于处理文件发送
+    void process6(int fd, Parser parser);// 用于处理文件重传
 
 private:
     char buffer[MAX_BUFFER];
