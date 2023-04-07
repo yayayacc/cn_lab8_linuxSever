@@ -25,4 +25,5 @@ file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS include/*.h)
 
 add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
 
+target_compile_definitions(${PROJECT_NAME} PUBLIC ROOT_DIR=${ROOT_DIR})
 target_include_directories(${PROJECT_NAME} PUBLIC include)

@@ -1,86 +1,63 @@
-#include "server.h"
-#include "parser.h"
+#include <string>
+
 #include "package_factory.h"
+#include "parser.h"
+#include "server.h"
+#include "util/json_serializer.h"
 
 // User类成员函数
-User::User(char const* ac, char const* pw){
-    account.resize(10);
-    pwd.resize(10);
-    
-    strcpy(const_cast<char*>(account.c_str()), ac);
-    strcpy(const_cast<char*>(pwd.c_str()), pw);
+User::User(const std::string& ac, const std::string& pw) :
+    account(ac), pwd(pw) {
 }
 
-void User::bindFd(int f){
+void User::bindFd(int f) {
     fd = f;
 }
 
-
 // Group类成员函数
-Group::Group(char const* groupName){
-    account.reserve(10);
-    strcpy(const_cast<char*>(account.c_str()), groupName);
+Group::Group(const std::string& groupName) :
+    account(groupName) {
 }
 
-
-
-
 // Server类成员函数
-void Server::init(){
-    
-    // 用户1
-    char const* u1Account = "cc12345678";
-    char const* u1Pwd = "123456";
-    User u1(u1Account, u1Pwd);
-    // 用户2
-    char const* u2Account = "core123456";
-    char const* u2Pwd = "654321";
-    User u2(u2Account, u2Pwd);
-    // 用户3
-    char const* u3Account = "godlike123";
-    char const* u3Pwd = "likegod";
-    User u3(u3Account, u3Pwd);
+void Server::init() {
+    rapidjson::Document data_info;
+    JsonSerialzer::deserialze(data_info, std::filesystem::path(XSTR(ROOT_DIR)) / "data/data.json");
 
+    auto Users  = data_info["Users"].GetArray();
+    auto Groups = data_info["Groups"].GetArray();
 
+    for (int i = 0; i < Users.Size(); ++i) {
+        auto user_info         = Users[i].GetObject();
+        auto user_account      = user_info["Account"].GetString();
+        auto user_pwd          = user_info["Pwd"].GetString();
+        allUsers[user_account] = User{user_account, user_pwd};
+    }
 
-    // 三个人共同的群
-    char const* groupName = "groupChat1";
-    Group g1(groupName);
-    // 把三个人放到群中
-    g1.members.insert(std::pair<std::string, User>(u1Account, u1));
-    g1.members.insert(std::pair<std::string, User>(u2Account, u2));
-    g1.members.insert(std::pair<std::string, User>(u3Account, u3));
+    for (int i = 0; i < Users.Size(); ++i) {
+        auto user_info    = Users[i].GetObject();
+        auto user_account = user_info["Account"].GetString();
+        auto user_friends = user_info["Friends"].GetArray();
+        for (int j = 0; j < user_friends.Size(); ++j)
+            allUsers[user_account].friends[user_friends[j].GetString()] = allUsers[user_account];
+    }
 
-
-
-    // 三个用户各自的朋友
-    u1.friends.insert(std::pair<std::string, User>(u2Account, u2));
-    u1.friends.insert(std::pair<std::string, User>(u3Account, u3));
-
-    u2.friends.insert(std::pair<std::string, User>(u1Account, u1));
-    u2.friends.insert(std::pair<std::string, User>(u3Account, u3));
-
-    u3.friends.insert(std::pair<std::string, User>(u1Account, u1));
-    u3.friends.insert(std::pair<std::string, User>(u2Account, u2));
-
-
-
-    // 把三个人放到系统中
-    allUsers.insert(std::pair<std::string, User>(u1Account, u1));
-    allUsers.insert(std::pair<std::string, User>(u2Account, u2));
-    allUsers.insert(std::pair<std::string, User>(u3Account, u3));
-
-    //把群放到系统中
-    allGroups.insert(std::pair<std::string, Group>(groupName, g1));
-
-    return;
+    for (int i = 0; i < Groups.Size(); ++i) {
+        auto  group_info = Groups[i].GetObject();
+        Group group{group_info["Name"].GetString()};
+        auto  group_members = group_info["Members"].GetArray();
+        for (int j = 0; j < group_members.Size(); ++j) {
+            group.members[group_members[j].GetString()] = allUsers[group_members[j].GetString()];
+        }
+        allGroups[group_info["Name"].GetString()] = group;
+    }
 }
 
 int Server::getPassivePort() {
     return m_passivePort;
 }
 
-int Server::creatSocket() {
+int Server::createSocket() {
     struct sockaddr_in saddr;
     int                fd, ret_val;
 
@@ -113,7 +90,7 @@ int Server::creatSocket() {
 
 void Server::run(int serverFd) {
     // 初始化文件描述符数组
-    
+
     for (int i = 1; i < MAX_CONNECTIONS; i++) {
         connections[i] = -1;
     }
@@ -122,11 +99,11 @@ void Server::run(int serverFd) {
     struct sockaddr_in newAddr;
     socklen_t          newLen = sizeof(struct sockaddr);
     // 循环工作
-    std::cout<<"开始循环工作"<<std::endl;
+    std::cout << "开始循环工作" << std::endl;
     while (true) {
         // 清理并且对readSet重新赋值
         memset(buffer, 0, MAX_BUFFER);
-        
+
         FD_ZERO(&m_readSet);
         for (int i = 0; i < MAX_CONNECTIONS; i++) {
             if (connections[i] >= 0) {
@@ -134,11 +111,9 @@ void Server::run(int serverFd) {
             }
         }
 
-
         // 开始用select进行监听,num为每次监听到的个数
-        int num = select(MAX_CONNECTIONS+1, &m_readSet, NULL, NULL, NULL);
+        int num = select(MAX_CONNECTIONS + 1, &m_readSet, NULL, NULL, NULL);
 
-        
         // select函数里面后面三个为NULL，代表对输入、异常不感兴趣，以及时间为无限等待
         if (num >= 0) {
             std::cout << num << " event(s)  occur" << std::endl;
@@ -150,7 +125,7 @@ void Server::run(int serverFd) {
                 if (newFd >= 0) {
                     std::cout << "accept a new connection with fd " << newFd << std::endl;
 
-// exit(1);
+                    // exit(1);
 
                     for (int i = 0; i < MAX_CONNECTIONS; i++) { // 把第一个空闲的位置给新来的fd
                         if (connections[i] < 0) {
@@ -172,9 +147,9 @@ void Server::run(int serverFd) {
             for (int i = 1; i < MAX_CONNECTIONS; i++) {
                 if (FD_ISSET(connections[i], &m_readSet) && (connections[i] > 0)) {
                     // int res = recv(connections[i], buffer, MAX_BUFFER, 0);
-                    std::cout<<"fd :"<<connections[i]<<" has sth occurs"<<std::endl;
+                    std::cout << "fd :" << connections[i] << " has sth occurs" << std::endl;
                     processRecv(connections, i);
-                    
+
                     // if(read(connections[i], buffer, MAX_BUFFER) == 0){
                     //     close(connections[i]);
                     //     std::cout<<"delete fd:"<<connections[i]<<std::endl;
@@ -211,203 +186,188 @@ void Server::processRecv(int* connections, int i) {
     // }
     // std::cout<<"读成功了"<<std::endl;
     int sum = read(connections[i], buffer, MAX_BUFFER);
-    std::cout<<"we have read "<<sum<<"byte(s)"<<std::endl;
-    if( sum == 0){
+    std::cout << "we have read " << sum << "byte(s)" << std::endl;
+    if (sum == 0) {
         close(connections[i]);
-        std::cout<<"fd : "<<connections[i]<<" has been disconnected!"<<std::endl;
+        std::cout << "fd : " << connections[i] << " has been disconnected!" << std::endl;
         connections[i] = -1;
-        
     }
-    
 
     parser.parsePkgHead(buffer);
     parser.parseMsg(buffer);
     process(connections[i], i, parser);
-
-        // PackageFactory::getInstance().releaseLoginPackage(buffer);
 }
 
-
-void Server::process(int fd, int i, Parser parser){
-    if(int(parser.info.opcode) == 10)   {
-        std::cout<<"parse  pkg10"<<std::endl;
-        process10(fd, parser);
-    }
-    if(int(parser.info.opcode) == 2){
-        std::cout<<"parse  pkg2"<<std::endl;
-        process2(fd, parser);
-    }
-    if(int(parser.info.opcode) == 3){
-        std::cout<<"parse  pkg3"<<std::endl;
-        process3(fd, parser);
-    }
-    if(int(parser.info.opcode) == 4){
-        std::cout<<"parse  pkg4"<<std::endl;
-        process4(fd, parser);
-    }
-    if(int(parser.info.opcode) == 6){
-        std::cout<<"parse  pkg6"<<std::endl;
-        process6(fd, parser);
+void Server::process(int fd, int i, Parser parser) {
+    switch (int(parser.info.opcode)) {
+        case 10: {
+            std::cout << "parse  pkg10" << std::endl;
+            process10(fd, parser);
+            break;
+        }
+        case 2: {
+            std::cout << "parse  pkg2" << std::endl;
+            process2(fd, parser);
+            break;
+        }
+        case 3: {
+            std::cout << "parse  pkg3" << std::endl;
+            process3(fd, parser);
+            break;
+        }
+        case 4: {
+            std::cout << "parse  pkg4" << std::endl;
+            process4(fd, parser);
+            break;
+        }
+        case 6: {
+            std::cout << "parse  pkg6" << std::endl;
+            process6(fd, parser);
+            break;
+        }
     }
 }
 
-
-void Server::process10(int fd, Parser parser){
-    
+void Server::process10(int fd, Parser parser) {
     auto iter = allUsers.find(parser.info.account);
-    if(iter == allUsers.end()){
+    if (iter == allUsers.end()) {
         // 查无此人
-        auto pkg = 
-                PackageFactory::getInstance().createPackage1("0000000000", 'c'); // 十个0表示用户不存在
-        sleep(0.5);
+        auto pkg =
+            PackageFactory::getInstance().createPackage1("0000000000", 'c'); // 十个0表示用户不存在
+        // sleep(0.5);
         write(fd, pkg.start, pkg.size);
-        std::cout<<"this account does not exist!"<<"   "<<pkg.size<<std::endl;
+        std::cout << "this account does not exist!"
+                  << "   " << pkg.size << std::endl;
         return;
     }
 
-    else{
+    else {
         parser.msg.resize(parser.info.msglen);
 
-        if(strcmp(iter->second.pwd.c_str(), parser.msg.c_str()) == 0){
+        if (strcmp(iter->second.pwd.c_str(), parser.msg.c_str()) == 0) {
             // 登录成功
             // TODO: 还需要写加载缓存区消息
-            std::cout<<iter->first<<" has logged in successfully!"<<std::endl;
+            std::cout << iter->first << " has logged in successfully!" << std::endl;
             iter->second.online = true;
-            auto pkg = 
-                    PackageFactory::getInstance().createPackage1(iter->first.c_str(), 'a');
-            sleep(0.5);
+            auto pkg =
+                PackageFactory::getInstance().createPackage1(iter->first.c_str(), 'a');
+            // sleep(0.5);
             account2fd.insert(std::pair<std::string, int>(iter->first, fd));
             write(fd, pkg.start, pkg.size);
             // std::cout<<"登录反馈报文发送成功"<<"   "<<pkg.size<<std::endl;
         }
 
-        else{
-            auto pkg = 
-                    PackageFactory::getInstance().createPackage1(iter->first.c_str(), 'b');
-            sleep(0.5);
+        else {
+            auto pkg =
+                PackageFactory::getInstance().createPackage1(iter->first.c_str(), 'b');
+            // sleep(0.5);
             write(fd, pkg.start, pkg.size);
-            std::cout<<iter->first<<" failed in logging in!"<<std::endl;
+            std::cout << iter->first << " failed in logging in!" << std::endl;
         }
     }
 
-    
-    std::cout<<"get out of process10"<<std::endl;
+    std::cout << "get out of process10" << std::endl;
 }
 
-
-void Server::process2(int fd, Parser parser){
+void Server::process2(int fd, Parser parser) {
     std::string account = parser.info.account;
-    std::string target = parser.info.target;
-    
+    std::string target  = parser.info.target;
+
     auto iter = account2fd.find(target);
-    if(iter == account2fd.end()){
+    if (iter == account2fd.end()) {
         // 目标账户名不存在，   UI界面不应有这种情况出现
         return;
     }
-    else{
+    else {
         // std::cout<<"account: "<<parser.info.account<<std::endl;
         // std::cout<<"target: "<<parser.info.target<<std::endl;
         // std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
         // std::cout<<"msg: "<<parser.msg<<std::endl;
-        auto pkg = 
-                PackageFactory::getInstance().createPackage2(parser.info.account, parser.info.target, parser.msg);
-        sleep(0.5);
+        auto pkg =
+            PackageFactory::getInstance().createPackage2(parser.info.account, parser.info.target, parser.msg);
+        // sleep(0.5);
         int targetFd = iter->second;
         write(targetFd, pkg.start, pkg.size);
-        std::cout<<"私信发送成功"<<std::endl;
+        std::cout << "私信发送成功" << std::endl;
         //exit(0);
-
     }
 }
 
-void Server::process3(int fd, Parser parser){
-    std::string account = parser.info.account;
+void Server::process3(int fd, Parser parser) {
+    std::string account     = parser.info.account;
     std::string groupTarget = parser.info.target;
-    
+
     auto groupIter = allGroups.find(groupTarget);
 
-    if(groupIter == allGroups.end()){
+    if (groupIter == allGroups.end()) {
         // 目标组不存在，   UI界面不应该有这种情况
         return;
     }
-    else{
+    else {
         auto temGroup = groupIter->second;
-        auto pkg = 
-                PackageFactory::getInstance().createPackage3(parser.info.account, parser.info.target, parser.msg);
-        sleep(0.5);
-        for(auto &user : temGroup.members){
+        auto pkg =
+            PackageFactory::getInstance().createPackage3(parser.info.account, parser.info.target, parser.msg);
+        // sleep(0.5);
+        for (auto& user : temGroup.members) {
             auto iter = account2fd.find(user.first);
-            if(iter == account2fd.end()){
+            if (iter == account2fd.end()) {
                 // 目标用户不在此组内，   UI界面不应该有这种情况
             }
-            else{
+            else {
                 int targetFd = iter->second;
                 write(targetFd, pkg.start, pkg.size);
             }
         }
-        std::cout<<"群消息发送成功"<<std::endl;
+        std::cout << "群消息发送成功" << std::endl;
     }
 }
 
+void Server::process4(int fd, Parser parser) {
+    std::string account   = parser.info.account;
+    std::string target    = parser.info.target;
+    uint32_t    fileIndex = parser.info.msgindex;
 
-void Server::process4(int fd, Parser parser){
-    std::string account = parser.info.account;
-    std::string target = parser.info.target;
-    uint32_t fileIndex = parser.info.msgindex;
-    
     auto iter = account2fd.find(target);
-    if(iter == account2fd.end()){
+    if (iter == account2fd.end()) {
         // 目标账户名不存在，   UI界面不应有这种情况出现
         return;
     }
-    else{
+    else {
         // std::cout<<"account: "<<parser.info.account<<std::endl;
         // std::cout<<"target: "<<parser.info.target<<std::endl;
         // std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
         // std::cout<<"msg: "<<parser.msg<<std::endl;
-        auto pkg = 
-                PackageFactory::getInstance().createPackage4(parser.info.account, parser.info.target,
-                    parser.info.msgindex, parser.info.filename, parser.msg);
-        sleep(0.5);
+        auto pkg =
+            PackageFactory::getInstance().createPackage4(parser.info.account, parser.info.target,
+                                                         parser.info.msgindex, parser.info.filename, parser.msg);
+        // sleep(0.5);
         int targetFd = iter->second;
         write(targetFd, pkg.start, pkg.size);
         //exit(0);
-
     }
 }
 
-
-
-void Server::process6(int fd, Parser parser){
-    std::string account = parser.info.account;
-    std::string target = parser.info.target;
-    uint32_t fileIndex = parser.info.msgindex;
+void Server::process6(int fd, Parser parser) {
+    std::string account   = parser.info.account;
+    std::string target    = parser.info.target;
+    uint32_t    fileIndex = parser.info.msgindex;
 
     auto iter = account2fd.find(target);
-    if(iter == account2fd.end()){
+    if (iter == account2fd.end()) {
         // 目标账户名不存在，   UI界面不应有这种情况出现
         return;
     }
-    else{
+    else {
         // std::cout<<"account: "<<parser.info.account<<std::endl;
         // std::cout<<"target: "<<parser.info.target<<std::endl;
         // std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
         // std::cout<<"msg: "<<parser.msg<<std::endl;
-        auto pkg = 
-                PackageFactory::getInstance().createPackage6(parser.info.account, parser.info.target,
-                    parser.info.filename, parser.info.msgindex);
-        sleep(0.5);
+        auto pkg =
+            PackageFactory::getInstance().createPackage6(parser.info.account, parser.info.target,
+                                                         parser.info.filename, parser.info.msgindex);
+        // sleep(0.5);
         int targetFd = iter->second;
         write(targetFd, pkg.start, pkg.size);
         //exit(0);
-
     }
 }
-
-
-
-
-
-
-
-

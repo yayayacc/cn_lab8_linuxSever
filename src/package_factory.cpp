@@ -1,13 +1,9 @@
-#include"package_factory.h"
+#include "package_factory.h"
 
+void PackageFactory::releasePackage(Package pkg) {
+}
 
-void PackageFactory::releasePackage(Package pkg){
-
-} 
-
-
-
-Package PackageFactory:: createLoginPackage(const char* account /* 10 byte */, const std::string& password) {
+Package PackageFactory::createLoginPackage(const char* account /* 10 byte */, const std::string& password) {
     Package pkg;
     pkg.size  = 40 + password.size(); // 40 Byte is the size of PackageHead
     pkg.start = new Byte[pkg.size];
@@ -37,10 +33,10 @@ Package PackageFactory:: createLoginPackage(const char* account /* 10 byte */, c
     return pkg;
 }
 
-Package PackageFactory::createPackage1(const char* account, char flag){
+Package PackageFactory::createPackage1(const char* account, char flag) {
     Package pkg;
-    pkg.size  = 40 + 1; // 40 Byte is the size of PackageHead
-    pkg.start = new Byte[pkg.size];
+    pkg.size        = 40 + 1; // 40 Byte is the size of PackageHead
+    pkg.start       = new Byte[pkg.size];
     uint16_t length = 1;
     // clear
     memset(pkg.start, 0, pkg.size);
@@ -49,14 +45,13 @@ Package PackageFactory::createPackage1(const char* account, char flag){
     {
         Byte* cur = pkg.start;
 
-        // 
+        //
         uint8_t type = 1;
         memcpy(pkg.start, &type, 1);
 
-        // 
+        //
         memcpy(pkg.start + 1, account, 10);
 
-        
         memcpy(pkg.start + 25, &length, 2);
 
         memcpy(pkg.start + 40, &flag, 1);
@@ -65,17 +60,14 @@ Package PackageFactory::createPackage1(const char* account, char flag){
     return pkg;
 }
 
-
-
-Package PackageFactory::createPackage2(std::string account, std::string target, std::string msg){
+Package PackageFactory::createPackage2(std::string account, std::string target, std::string msg) {
     Package pkg;
     pkg.size  = 40 + msg.size(); // 40 Byte is the size of PackageHead
     pkg.start = new Byte[pkg.size];
-    
-    memset(pkg.start, 0, pkg.size);
-    
-    {
 
+    memset(pkg.start, 0, pkg.size);
+
+    {
         // 1.type
         uint8_t type = 2;
         memcpy(pkg.start, &type, 1);
@@ -97,16 +89,14 @@ Package PackageFactory::createPackage2(std::string account, std::string target, 
     return pkg;
 }
 
-
-Package PackageFactory::createPackage3(std::string account, std::string target, std::string msg ){
+Package PackageFactory::createPackage3(std::string account, std::string target, std::string msg) {
     Package pkg;
     pkg.size  = 40 + msg.size(); // 40 Byte is the size of PackageHead
     pkg.start = new Byte[pkg.size];
-    
-    memset(pkg.start, 0, pkg.size);
-    
-    {
 
+    memset(pkg.start, 0, pkg.size);
+
+    {
         // 1.type
         uint8_t type = 2;
         memcpy(pkg.start, &type, 1);
@@ -128,15 +118,14 @@ Package PackageFactory::createPackage3(std::string account, std::string target, 
     return pkg;
 }
 
-Package PackageFactory::createPackage4(std::string account, std::string target, int msgIndex, std::string filename, std::string msg){
+Package PackageFactory::createPackage4(std::string account, std::string target, int msgIndex, std::string filename, std::string msg) {
     Package pkg;
     pkg.size  = 40 + msg.size(); // 40 Byte is the size of PackageHead
     pkg.start = new Byte[pkg.size];
-    
+
     memset(pkg.start, 0, pkg.size);
 
     {
-
         // 1.type
         uint8_t type = 4;
         memcpy(pkg.start, &type, 1);
@@ -157,23 +146,21 @@ Package PackageFactory::createPackage4(std::string account, std::string target, 
 
         // 6.filename
         memcpy(pkg.start + 27, filename.c_str(), 13);
-        
+
         // 7.msg
         memcpy(pkg.start + 40, msg.c_str(), msg.size());
     }
     return pkg;
 }
 
-
-Package PackageFactory::createPackage6(std::string account, std::string target, std::string filename, int fileIndex){
+Package PackageFactory::createPackage6(std::string account, std::string target, std::string filename, int fileIndex) {
     Package pkg;
-    pkg.size  = 40 ; // 40 Byte is the size of PackageHead
+    pkg.size  = 40; // 40 Byte is the size of PackageHead
     pkg.start = new Byte[pkg.size];
-    
+
     memset(pkg.start, 0, pkg.size);
 
     {
-
         // 1.type
         uint8_t type = 6;
         memcpy(pkg.start, &type, 1);
@@ -194,7 +181,7 @@ Package PackageFactory::createPackage6(std::string account, std::string target, 
 
         // 6.filename
         memcpy(pkg.start + 27, filename.c_str(), 13);
-        
+
         // // 7.msg
         // memcpy(pkg.start + 40, msg.c_str(), msg.size());
     }

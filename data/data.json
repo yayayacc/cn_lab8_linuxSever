@@ -1,0 +1,38 @@
+{
+    "Users": [
+        {
+            "Account": "cc12345678",
+            "Pwd": "123456",
+            "Friends": [
+                "core123456",
+                "groupChat1"
+            ]
+        },
+        {
+            "Account": "core123456",
+            "Pwd": "654321",
+            "Friends": [
+                "cc12345678",
+                "godlike123"
+            ]
+        },
+        {
+            "Account": "godlike123",
+            "Pwd": "likegod",
+            "Friends": [
+                "cc12345678",
+                "core123456"
+            ]
+        }
+    ],
+    "Groups": [
+        {
+            "Name": "groupChat1",
+            "Members": [
+                "cc12345678",
+                "core123456",
+                "godlike123"
+            ]
+        }
+    ]
+}
