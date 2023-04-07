@@ -203,28 +203,23 @@ void Server::process(int fd, int i, Parser parser) {
         case 10: {
             std::cout << "parse  pkg10" << std::endl;
             process10(fd, parser);
-            break;
-        }
+        } break;
         case 2: {
             std::cout << "parse  pkg2" << std::endl;
             process2(fd, parser);
-            break;
-        }
+        } break;
         case 3: {
             std::cout << "parse  pkg3" << std::endl;
             process3(fd, parser);
-            break;
-        }
+        } break;
         case 4: {
             std::cout << "parse  pkg4" << std::endl;
             process4(fd, parser);
-            break;
-        }
+        } break;
         case 6: {
             std::cout << "parse  pkg6" << std::endl;
             process6(fd, parser);
-            break;
-        }
+        } break;
     }
 }
 
