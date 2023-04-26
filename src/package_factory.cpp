@@ -91,9 +91,9 @@ Package PackageFactory::createPackage2(std::string account, std::string target, 
 
 Package PackageFactory::createPackage3(std::string account, std::string target, std::string msg) {
     Package pkg;
-    pkg.size  = 40 + msg.size(); // 40 Byte is the size of PackageHead
-    pkg.start = new Byte[pkg.size];
-
+    pkg.size        = 40 + msg.size(); // 40 Byte is the size of PackageHead
+    pkg.start       = new Byte[pkg.size];
+    std::string aaa = "groupChat1";
     memset(pkg.start, 0, pkg.size);
 
     {
@@ -102,7 +102,7 @@ Package PackageFactory::createPackage3(std::string account, std::string target, 
         memcpy(pkg.start, &type, 1);
 
         // 2.account
-        memcpy(pkg.start + 1, account.c_str(), 10);
+        memcpy(pkg.start + 1, aaa.c_str(), 10);
 
         // 3.target
         memcpy(pkg.start + 11, target.c_str(), 10);

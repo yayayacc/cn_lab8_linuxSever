@@ -3,7 +3,7 @@
 /*
     Only For Test
 */
-
+#include <iostream>
 #include <stdint.h>
 #include <string.h>
 #include <string>
@@ -14,7 +14,7 @@ struct Info {
     char        opcode;   // 1
     std::string account;  // 10
     std::string target;   // 10
-    uint32_t    msgindex; //4
+    uint32_t    msgindex; // 4
     uint16_t    msglen;   // 2
     std::string filename; // 13
 };
@@ -34,7 +34,7 @@ public:
 
             memcpy(&info.opcode, cur, 1);
 
-            memcpy(const_cast<char*>(info.account.c_str()), cur + 1, 10); //account
+            memcpy(const_cast<char*>(info.account.c_str()), cur + 1, 10); // account
 
             memcpy(const_cast<char*>(info.target.c_str()), cur + 11, 10); // target
 
@@ -47,7 +47,13 @@ public:
     }
 
     void parseMsg(char* start) {
+        // std::cout << "aaa" << std::endl;
+
         msg.resize(info.msglen);
+        // std::cout << "bbb" << std::endl;
+
+        std::cout << "msglen : " << msg.length() << std::endl
+                  << info.msglen << std::endl;
 
         memcpy(const_cast<char*>(msg.c_str()), start + 40, info.msglen);
     }

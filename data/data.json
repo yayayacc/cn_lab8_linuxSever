@@ -1,27 +1,132 @@
 {
     "Users": [
         {
+            "Account": "godlike123",
+            "Pwd": "123456",
+            "Friends": [
+                "core123456",
+                "core1234RF",
+                "core1234RM",
+                "core1234SF",
+                "cc12345678",
+                "cc123456RF",
+                "cc123456RM",
+                "cc123455SF",
+                "groupChat1"
+            ]
+        },
+        {
+            "Account": "godlike_RM",
+            "Pwd": "123456",
+            "Friends": [
+                "core123456",
+                "core1234RF",
+                "core1234RM",
+                "core1234SF",
+                "cc12345678",
+                "cc123456SF",
+                "cc123456RF",
+                "cc123456RM",
+                "groupChat1"
+            ]
+        },
+        {
+            "Account": "godlike_RF",
+            "Pwd": "123456",
+            "Friends": [
+                "core123456",
+                "core1234RF",
+                "core1234RM",
+                "core1234SF",
+                "cc12345678",
+                "cc123456RF",
+                "cc123456RM",
+                "cc123456SF",
+                "groupChat1"
+            ]
+        },
+        {
             "Account": "cc12345678",
             "Pwd": "123456",
             "Friends": [
                 "core123456",
+                "core1234RF",
+                "core1234RM",
+                "core1234SF",
+                "godlike123",
+                "godlike_RM",
+                "godlike_RF",
+                "groupChat1"
+            ]
+        },
+        {
+            "Account": "cc123456RM",
+            "Pwd": "123456",
+            "Friends": [
+                "core123456",
+                "core1234RF",
+                "core1234RM",
+                "core1234SF",
+                "godlike123",
+                "godlike_RM",
+                "godlike_RF",
+                "groupChat1"
+            ]
+        },
+        {
+            "Account": "cc123456RF",
+            "Pwd": "123456",
+            "Friends": [
+                "core123456",
+                "core1234RF",
+                "core1234RM",
+                "core1234SF",
+                "godlike123",
+                "godlike_RM",
+                "godlike_RF",
                 "groupChat1"
             ]
         },
         {
             "Account": "core123456",
-            "Pwd": "654321",
+            "Pwd": "123456",
             "Friends": [
                 "cc12345678",
-                "godlike123"
+                "cc123456RF",
+                "cc123456RM",
+                "cc123456SF",
+                "godlike123",
+                "godlike_RM",
+                "godlike_RF",
+                "groupChat1"
             ]
         },
         {
-            "Account": "godlike123",
-            "Pwd": "likegod",
+            "Account": "core1234RF",
+            "Pwd": "123456",
             "Friends": [
                 "cc12345678",
-                "core123456"
+                "cc123456RF",
+                "cc123456RM",
+                "cc123456SF",
+                "godlike123",
+                "godlike_RM",
+                "godlike_RF",
+                "groupChat1"
+            ]
+        },
+        {
+            "Account": "core1234RM",
+            "Pwd": "123456",
+            "Friends": [
+                "cc12345678",
+                "cc123456RF",
+                "cc123456RM",
+                "cc123456SF",
+                "godlike123",
+                "godlike_RM",
+                "godlike_RF",
+                "groupChat1"
             ]
         }
     ],
@@ -29,9 +134,9 @@
         {
             "Name": "groupChat1",
             "Members": [
-                "cc12345678",
-                "core123456",
-                "godlike123"
+                "cc123456RM",
+                "core1234RM",
+                "godlike_RM"
             ]
         }
     ]

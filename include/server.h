@@ -10,8 +10,9 @@
 #include <unistd.h>
 #include <vector>
 
-#define MAX_CONNECTIONS 10
-#define MAX_BUFFER 4095
+#define MAX_CONNECTIONS 1000
+// #define MAX_BUFFER 4095
+#define MAX_BUFFER 1118192
 
 #define XSTR(s) STR(s)
 #define STR(s) #s

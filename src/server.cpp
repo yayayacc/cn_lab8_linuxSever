@@ -1,9 +1,12 @@
-#include <string>
-
+#include "server.h"
 #include "package_factory.h"
 #include "parser.h"
-#include "server.h"
 #include "util/json_serializer.h"
+#include <math.h>
+#include <stdio.h>
+#include <string>
+
+#include <netinet/tcp.h>
 
 // User类成员函数
 User::User(const std::string& ac, const std::string& pw) :
@@ -121,7 +124,14 @@ void Server::run(int serverFd) {
             if (FD_ISSET(serverFd, &m_readSet)) {
                 std::cout << "a new connection occurs" << std::endl;
 
-                int newFd = accept(serverFd, (struct sockaddr*)&newAddr, &newLen);
+                int newFd        = accept(serverFd, (struct sockaddr*)&newAddr, &newLen);
+                int nagle_status = 1;
+                int result       = setsockopt(newFd,
+                                              IPPROTO_TCP,
+                                              TCP_NODELAY,
+                                              (char*)&nagle_status,
+                                              sizeof(int));
+
                 if (newFd >= 0) {
                     std::cout << "accept a new connection with fd " << newFd << std::endl;
 
@@ -176,7 +186,7 @@ void Server::run(int serverFd) {
 
 void Server::processRecv(int* connections, int i) {
     Parser parser;
-
+    memset(buffer, 0, MAX_BUFFER);
     int readSize;
     // if((readSize = read(fd, buffer, MAX_BUFFER) == 0)){
     //     close(fd);
@@ -186,16 +196,39 @@ void Server::processRecv(int* connections, int i) {
     // }
     // std::cout<<"读成功了"<<std::endl;
     int sum = read(connections[i], buffer, MAX_BUFFER);
-    std::cout << "we have read " << sum << "byte(s)" << std::endl;
+    int ii  = 0;
+    int aaa = sum;
+    while (aaa > 0) {
+        int ttt = aaa;
+        // std::cout << "aaa: " << aaa << std::endl;
+        std::cout << "we have read " << aaa << "byte(s)" << std::endl;
+        char subBuffer[ttt];
+        memset(subBuffer, 0, ttt);
+        memcpy(subBuffer, buffer + ii * 256, ttt);
+
+        std::string name;
+        // name.resize(256);
+        // memcpy(const_cast<char*>(name.c_str()), buffer, 256);
+        // std::cout << name << std::endl;
+        // std::cout << "555" << std::endl;
+        parser.parsePkgHead(subBuffer);
+        // std::cout << "666" << std::endl;
+        std::cout << parser.info.account << std::endl;
+        // std::cout << "666" << std::endl;
+        // std::cout << "666" << std::endl;
+        parser.parseMsg(subBuffer);
+        // std::cout << "code " << parser.msg << std::endl;
+
+        // std::cout << "777" << std::endl;
+        process(connections[i], i, parser);
+        ++ii;
+        aaa -= 256;
+    }
     if (sum == 0) {
         close(connections[i]);
         std::cout << "fd : " << connections[i] << " has been disconnected!" << std::endl;
         connections[i] = -1;
     }
-
-    parser.parsePkgHead(buffer);
-    parser.parseMsg(buffer);
-    process(connections[i], i, parser);
 }
 
 void Server::process(int fd, int i, Parser parser) {
@@ -214,6 +247,8 @@ void Server::process(int fd, int i, Parser parser) {
         } break;
         case 4: {
             std::cout << "parse  pkg4" << std::endl;
+            // std::cout << "888" << std::endl;
+
             process4(fd, parser);
         } break;
         case 6: {
@@ -247,6 +282,12 @@ void Server::process10(int fd, Parser parser) {
             auto pkg =
                 PackageFactory::getInstance().createPackage1(iter->first.c_str(), 'a');
             // sleep(0.5);
+            // for (int jjj = 0; jjj < 41; jjj++) {
+            //     std::cout << *((char*)(&pkg + jjj));
+            // }
+            // std::cout << std::endl;
+            // std::cout << parser.info.account << std::endl;
+
             account2fd.insert(std::pair<std::string, int>(iter->first, fd));
             write(fd, pkg.start, pkg.size);
             // std::cout<<"登录反馈报文发送成功"<<"   "<<pkg.size<<std::endl;
@@ -274,17 +315,17 @@ void Server::process2(int fd, Parser parser) {
         return;
     }
     else {
-        // std::cout<<"account: "<<parser.info.account<<std::endl;
-        // std::cout<<"target: "<<parser.info.target<<std::endl;
-        // std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
-        // std::cout<<"msg: "<<parser.msg<<std::endl;
+        std::cout << "account: " << parser.info.account << std::endl;
+        std::cout << "target: " << parser.info.target << std::endl;
+        std::cout << "msglen: " << parser.info.msglen << std::endl;
+        std::cout << "msg: " << parser.msg << std::endl;
         auto pkg =
             PackageFactory::getInstance().createPackage2(parser.info.account, parser.info.target, parser.msg);
         // sleep(0.5);
         int targetFd = iter->second;
         write(targetFd, pkg.start, pkg.size);
         std::cout << "私信发送成功" << std::endl;
-        //exit(0);
+        // exit(0);
     }
 }
 
@@ -310,7 +351,28 @@ void Server::process3(int fd, Parser parser) {
             }
             else {
                 int targetFd = iter->second;
+                int userr;
+                if (fd == account2fd["cc12345678"]) {
+                    userr = 1;
+                }
+                else if (fd == account2fd["core123456"]) {
+                    userr = 2;
+                }
+                else {
+                    userr = 3;
+                }
+                if (userr == 1 && targetFd == account2fd["cc123456RM"]) {
+                    continue;
+                }
+                if (userr == 2 && targetFd == account2fd["core1234RM"]) {
+                    continue;
+                }
+                if (userr == 3 && targetFd == account2fd["god_likeRM"]) {
+                    continue;
+                }
+
                 write(targetFd, pkg.start, pkg.size);
+                std::cout << "group msg sent" << std::endl;
             }
         }
         std::cout << "群消息发送成功" << std::endl;
@@ -321,25 +383,40 @@ void Server::process4(int fd, Parser parser) {
     std::string account   = parser.info.account;
     std::string target    = parser.info.target;
     uint32_t    fileIndex = parser.info.msgindex;
+    // std::cout << "999" << std::endl;
+
+    FILE* fp = fopen("aaaa.txt", "a");
 
     auto iter = account2fd.find(target);
-    if (iter == account2fd.end()) {
-        // 目标账户名不存在，   UI界面不应有这种情况出现
-        return;
-    }
-    else {
-        // std::cout<<"account: "<<parser.info.account<<std::endl;
-        // std::cout<<"target: "<<parser.info.target<<std::endl;
-        // std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
-        // std::cout<<"msg: "<<parser.msg<<std::endl;
-        auto pkg =
-            PackageFactory::getInstance().createPackage4(parser.info.account, parser.info.target,
-                                                         parser.info.msgindex, parser.info.filename, parser.msg);
-        // sleep(0.5);
-        int targetFd = iter->second;
-        write(targetFd, pkg.start, pkg.size);
-        //exit(0);
-    }
+    // if (iter == account2fd.end()) {
+    //     // 目标账户名不存在，   UI界面不应有这种情况出现
+    //     return;
+    // }
+    // else {
+    // std::cout<<"account: "<<parser.info.account<<std::endl;
+    // std::cout<<"target: "<<parser.info.target<<std::endl;
+    // std::cout<<"msglen: "<<parser.info.msglen<<std::endl;
+    // std::cout<<"msg: "<<parser.msg<<std::endl;
+    // std::cout << "111" << std::endl;
+    // std::cout << "msg: " << parser.msg << std::endl;
+    auto pkg =
+        PackageFactory::getInstance().createPackage4(parser.info.account, parser.info.target,
+                                                     parser.info.msgindex, parser.info.filename, parser.msg);
+    // sleep(0.5);
+    // std::cout << "222" << std::endl;
+    fwrite(pkg.start + 40, 1, parser.info.msglen, fp);
+    fclose(fp);
+    Parser ttt;
+    ttt.parsePkgHead(pkg.start);
+    ttt.parseMsg(pkg.start);
+    // std::cout << " pkg size " << pkg.size << "   opcode:" << ttt.info.opcode << std::endl;
+    std::cout << " target  " << ttt.info.target << std::endl;
+    int targetFd = iter->second;
+    // std::cout << "333" << std::endl;
+    write(targetFd, pkg.start, pkg.size);
+    // std::cout << "444" << std::endl;
+    // exit(0);
+    // }
 }
 
 void Server::process6(int fd, Parser parser) {
@@ -363,6 +440,6 @@ void Server::process6(int fd, Parser parser) {
         // sleep(0.5);
         int targetFd = iter->second;
         write(targetFd, pkg.start, pkg.size);
-        //exit(0);
+        // exit(0);
     }
 }
