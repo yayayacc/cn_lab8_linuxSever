@@ -16,6 +16,21 @@
             ]
         },
         {
+            "Account": "godlike_SF",
+            "Pwd": "123456",
+            "Friends": [
+                "core123456",
+                "core1234RF",
+                "core1234RM",
+                "core1234SF",
+                "cc12345678",
+                "cc123456RF",
+                "cc123456RM",
+                "cc123455SF",
+                "groupChat1"
+            ]
+        },
+        {
             "Account": "godlike_RM",
             "Pwd": "123456",
             "Friends": [
@@ -60,6 +75,20 @@
             ]
         },
         {
+            "Account": "cc123456SF",
+            "Pwd": "123456",
+            "Friends": [
+                "core123456",
+                "core1234RF",
+                "core1234RM",
+                "core1234SF",
+                "godlike123",
+                "godlike_RM",
+                "godlike_RF",
+                "groupChat1"
+            ]
+        },
+        {
             "Account": "cc123456RM",
             "Pwd": "123456",
             "Friends": [
@@ -89,6 +118,20 @@
         },
         {
             "Account": "core123456",
+            "Pwd": "123456",
+            "Friends": [
+                "cc12345678",
+                "cc123456RF",
+                "cc123456RM",
+                "cc123456SF",
+                "godlike123",
+                "godlike_RM",
+                "godlike_RF",
+                "groupChat1"
+            ]
+        },
+        {
+            "Account": "core1234SF",
             "Pwd": "123456",
             "Friends": [
                 "cc12345678",

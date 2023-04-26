@@ -25,8 +25,7 @@ Group::Group(const std::string& groupName) :
 // Server类成员函数
 void Server::init() {
     rapidjson::Document data_info;
-    JsonSerialzer::deserialze(data_info, std::filesystem::path(XSTR(ROOT_DIR)) / "data/data.json");
-
+    JsonSerialzer::deserialze(data_info, "../../data/data.json");
     auto Users  = data_info["Users"].GetArray();
     auto Groups = data_info["Groups"].GetArray();
 
@@ -43,6 +42,15 @@ void Server::init() {
         auto user_friends = user_info["Friends"].GetArray();
         for (int j = 0; j < user_friends.Size(); ++j)
             allUsers[user_account].friends[user_friends[j].GetString()] = allUsers[user_account];
+    }
+
+    for (int i = 0; i < Users.Size(); ++i) {
+        auto user_info    = Users[i].GetObject();
+        auto user_account = user_info["Account"].GetString();
+        // auto user_friends = user_info["Friends"].GetArray();
+        // bool user_online = false;
+
+        allUsers[user_account].online = false;
     }
 
     for (int i = 0; i < Groups.Size(); ++i) {
@@ -225,8 +233,12 @@ void Server::processRecv(int* connections, int i) {
         aaa -= 256;
     }
     if (sum == 0) {
+        auto ii                = fd2account.find(connections[i]);
+        auto temUser           = allUsers.find(ii->second);
+        temUser->second.online = false;
         close(connections[i]);
         std::cout << "fd : " << connections[i] << " has been disconnected!" << std::endl;
+
         connections[i] = -1;
     }
 }
@@ -289,8 +301,24 @@ void Server::process10(int fd, Parser parser) {
             // std::cout << parser.info.account << std::endl;
 
             account2fd.insert(std::pair<std::string, int>(iter->first, fd));
+            fd2account.insert(std::pair<int, std::string>(fd, iter->first));
+
             write(fd, pkg.start, pkg.size);
             // std::cout<<"登录反馈报文发送成功"<<"   "<<pkg.size<<std::endl;
+
+            auto iter2 = allUsers.find(parser.info.account);
+            if (!iter2->second.msgBuffer.empty()) {
+                auto jjj = iter2->second.msgBuffer.begin();
+                while (jjj != iter2->second.msgBuffer.end()) {
+                    // auto iter3    = account2fd.find(parser.info.account);
+                    // int  targetFd = iter3->second;
+                    int targetFd = fd;
+                    write(targetFd, (jjj)->start, jjj->size);
+                    jjj++;
+                    std::cout << "私信发送成功" << std::endl;
+                }
+                iter2->second.msgBuffer.clear();
+            }
         }
 
         else {
@@ -319,12 +347,22 @@ void Server::process2(int fd, Parser parser) {
         std::cout << "target: " << parser.info.target << std::endl;
         std::cout << "msglen: " << parser.info.msglen << std::endl;
         std::cout << "msg: " << parser.msg << std::endl;
+
         auto pkg =
             PackageFactory::getInstance().createPackage2(parser.info.account, parser.info.target, parser.msg);
-        // sleep(0.5);
-        int targetFd = iter->second;
-        write(targetFd, pkg.start, pkg.size);
-        std::cout << "私信发送成功" << std::endl;
+
+        auto iter2 = allUsers.find(parser.info.target);
+        if (iter2->second.online) {
+            // sleep(0.5);
+            int targetFd = iter->second;
+            write(targetFd, pkg.start, pkg.size);
+            std::cout << "私信发送成功" << std::endl;
+        }
+        else {
+            iter2->second.msgBuffer.push_back(pkg);
+            std::cout << "私信放入缓冲区" << std::endl;
+        }
+
         // exit(0);
     }
 }

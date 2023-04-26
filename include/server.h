@@ -1,5 +1,6 @@
 #pragma once
 
+#include "package_factory.h"
 #include "parser.h"
 #include <errno.h>
 #include <iostream>
@@ -34,7 +35,8 @@ public:
     std::map<std::string, Group> groups;
 
     // TODO:应该还要有个消息缓冲区，用以存放离线时的消息
-    int fd; // 这个账号登录时使用的是哪个文件描述符
+    std::vector<struct Package> msgBuffer;
+    int                         fd; // 这个账号登录时使用的是哪个文件描述符
 };
 
 class Group {
@@ -79,4 +81,5 @@ private:
     std::map<std::string, Group> allGroups;
 
     std::map<std::string, int> account2fd;
+    std::map<int, std::string> fd2account;
 };

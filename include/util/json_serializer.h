@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include <cstdio>
-#include <filesystem>
 #include <iostream>
 
 #include <rapidjson/document.h>
@@ -15,7 +14,7 @@
 
 class JsonSerialzer {
 public:
-    static void serialze(const rapidjson::Document& doc, const std::filesystem::path& path) {
+    static void serialze(const rapidjson::Document& doc, const std::string& path) {
         FILE* fp = fopen(path.c_str(), "w");
 
         char                                          writeBuffer[65536];
@@ -26,12 +25,7 @@ public:
         fclose(fp);
     }
 
-    static void deserialze(rapidjson::Document& doc, const std::filesystem::path& path) {
-        if (!std::filesystem::exists(path)) {
-            std::cout << "The open_path doesn't exsit!" << std::endl;
-            return;
-        }
-
+    static void deserialze(rapidjson::Document& doc, const std::string& path) {
         FILE* fp = fopen(path.c_str(), "r");
 
         char                      readBuffer[65536];
